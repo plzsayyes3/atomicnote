@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Markdown File List</title>
+</head>
+<body>
+    <h1>Markdown Files in the Repository</h1>
+    <ul id="markdown-list"></ul>
+
+    <script>
+        // GitHub username and repository name
+        const username = "plzsayyes3";
+        const repo = "atomicnote";
+
+        // GitHub API endpoint for fetching repository contents
+        const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents`;
+
+        // Fetch repository contents using GitHub API
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                // Filter out only Markdown files
+                const markdownFiles = data.filter(file => file.name.endsWith(".md"));
+
+                // Display the list of Markdown files
+                const markdownList = document.getElementById("markdown-list");
+                markdownFiles.forEach(file => {
+                    const listItem = document.createElement("li");
+                    const link = document.createElement("a");
+                    link.href = file.html_url;
+                    link.textContent = file.name;
+                    listItem.appendChild(link);
+                    markdownList.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error("Error fetching data:", error));
+    </script>
+</body>
+</html>
