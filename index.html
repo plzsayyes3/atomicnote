@@ -4,10 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub Markdown File List</title>
+    <style>
+        /* Add some basic styling for better presentation */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
     <h1>Markdown Files in the Repository</h1>
     <ul id="markdown-list"></ul>
+
+    <div id="markdown-preview-container">
+        <iframe id="markdown-preview" style="width: 100%; height: 500px; border: 1px solid #ccc;"></iframe>
+    </div>
 
     <script>
         // GitHub username and repository name
@@ -29,13 +48,28 @@
                 markdownFiles.forEach(file => {
                     const listItem = document.createElement("li");
                     const link = document.createElement("a");
-                    link.href = file.html_url;
+                    link.href = "#"; // Set a placeholder href
                     link.textContent = file.name;
                     listItem.appendChild(link);
                     markdownList.appendChild(listItem);
+
+                    // Add click event listener to load markdown preview
+                    link.addEventListener("click", () => loadMarkdownPreview(file.download_url));
                 });
             })
             .catch(error => console.error("Error fetching data:", error));
+
+        // Function to load and display Markdown preview
+        function loadMarkdownPreview(url) {
+            fetch(url)
+                .then(response => response.text())
+                .then(markdown => {
+                    // Display markdown content in the iframe
+                    const previewIframe = document.getElementById("markdown-preview");
+                    previewIframe.contentDocument.body.innerHTML = `<pre>${markdown}</pre>`;
+                })
+                .catch(error => console.error("Error fetching Markdown:", error));
+        }
     </script>
 </body>
 </html>
