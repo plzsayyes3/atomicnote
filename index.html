@@ -5,29 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub Markdown File List</title>
     <style>
-        /* Add some basic styling for better presentation */
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 1200px;
             margin: 20px auto;
+            display: flex;
         }
+
+        #file-list {
+            flex: 1;
+            padding-right: 20px;
+            border-right: 1px solid #ccc;
+        }
+
+        #markdown-preview-container {
+            flex: 2;
+            margin-left: 20px;
+        }
+
         ul {
             list-style-type: none;
             padding: 0;
         }
+
         li {
             margin-bottom: 5px;
+            cursor: pointer;
+            color: blue;
+        }
+
+        li:hover {
+            text-decoration: underline;
+        }
+
+        #markdown-preview {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 500px;
+        }
+
+        #update-time {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
         }
     </style>
 </head>
 <body>
-    <h1>My Atomic note</h1>
-    <ul id="markdown-list"></ul>
-
-    <div id="markdown-preview-container">
-        <iframe id="markdown-preview" style="width: 100%; height: 500px; border: 1px solid #ccc;"></iframe>
+    <div id="file-list">
+        <h2>Markdown Files in the Repository</h2>
+        <ul id="markdown-list"></ul>
     </div>
 
+    <div id="markdown-preview-container">
+        <h2>Markdown Preview</h2>
+        <div id="markdown-preview"></div>
+        <div id="update-time"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
     <script>
         // GitHub username and repository name
         const username = "plzsayyes3";
@@ -35,6 +71,19 @@
 
         // GitHub API endpoint for fetching repository contents
         const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents`;
+
+        // Showdown.js converter
+        const converter = new showdown.Converter({
+            parseImgDimensions: true,
+            simplifiedAutoLink: true,
+            excludeTrailingPunctuationFromURLs: true,
+            literalMidWordUnderscores: true,
+            strikethrough: true,
+            tables: true,
+            tasklists: true,
+            smoothLivePreview: true,
+            smartIndentationFix: true,
+        });
 
         // Fetch repository contents using GitHub API
         fetch(apiUrl)
@@ -47,26 +96,35 @@
                 const markdownList = document.getElementById("markdown-list");
                 markdownFiles.forEach(file => {
                     const listItem = document.createElement("li");
-                    const link = document.createElement("a");
-                    link.href = "#"; // Set a placeholder href
-                    link.textContent = file.name;
-                    listItem.appendChild(link);
+                    listItem.textContent = file.name;
+                    listItem.addEventListener("click", () => loadMarkdownPreview(file.path));
                     markdownList.appendChild(listItem);
-
-                    // Add click event listener to load markdown preview
-                    link.addEventListener("click", () => loadMarkdownPreview(file.download_url));
                 });
             })
             .catch(error => console.error("Error fetching data:", error));
 
         // Function to load and display Markdown preview
-        function loadMarkdownPreview(url) {
+        function loadMarkdownPreview(path) {
+            const url = `https://raw.githubusercontent.com/${username}/${repo}/main/${path}`;
             fetch(url)
                 .then(response => response.text())
                 .then(markdown => {
-                    // Display markdown content in the iframe
-                    const previewIframe = document.getElementById("markdown-preview");
-                    previewIframe.contentDocument.body.innerHTML = `<pre>${markdown}</pre>`;
+                    // Remove front matter (assumes front matter is separated by "---")
+                    const markdownBody = markdown.replace(/^---[\s\S]+?---/, '');
+
+                    // Convert Markdown body to HTML
+                    const html = converter.makeHtml(markdownBody);
+
+                    // Display HTML in the preview container
+                    const previewContainer = document.getElementById("markdown-preview");
+                    previewContainer.innerHTML = html;
+
+                    // Show the preview container
+                    document.getElementById("markdown-preview-container").style.display = "block";
+
+                    // Display update time
+                    const updateTime = new Date();
+                    document.getElementById("update-time").innerText = `Last updated: ${updateTime.toLocaleString()}`;
                 })
                 .catch(error => console.error("Error fetching Markdown:", error));
         }
